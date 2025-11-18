@@ -1,0 +1,68 @@
+name: Go-app-workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+# First job
+#  build-Go-app:
+#    runs-on: ubuntu-latest
+#    steps:
+#    - uses: actions/checkout@v3
+#
+#    - name: Set up Go
+#      uses: actions/setup-go@v3
+#      with:
+#        go-version: 1.18
+#
+## Discover the Go install path, where the go command will install the current package
+## Set path where go install build binaries
+#    - name: go configs
+#      run: |
+#          # go list -f '{{.Target}}'
+#          go env -w GOBIN=./cmd/englishLearning/
+#
+#
+#    - name: Build
+#      working-directory: ./cmd/englishLearning/
+#      run: |
+#          go get ./...
+#          go mod tidy
+#          go build -v ./...
+#          ls -la .
+#          
+#          #/home/runner/work/englishlearning/englishlearning/cmd/englishLearning/englishLearning
+#
+#    - name: Test
+#      run: |
+#           go test -v ./...
+
+# Second Job
+   deploy-Go-app:
+         runs-on: ubuntu-latest
+         #needs: [build-Go-app]
+         steps:
+         - uses: actions/checkout@v3
+  
+         - name: Login to Docker Hub
+           uses: docker/login-action@v1
+           with:
+             username: ${{ secrets.DOCKER_HUB_USERNAME }}
+             password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+         
+         - name: Set up Docker Buildx
+           uses: docker/setup-buildx-action@v1
+         
+         - name: Build and push
+           uses: docker/build-push-action@v2
+           with:
+             context: .
+             file: ./Dockerfile
+             push: true
+             tags: ${{ secrets.DOCKER_HUB_USERNAME }}/english-learning:latest
+ 
+ 
+         - run: |
+            pwd
+            ls -la
