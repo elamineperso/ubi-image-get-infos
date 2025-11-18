@@ -1,4 +1,4 @@
-name: Go-app-workflow
+name: Generate-and-push-ubi-images-infos
 
 on:
   workflow_dispatch:
