@@ -1,26 +1,39 @@
-FROM golang AS builder
+# ---------------------------
+# 1. Build stage
+# ---------------------------
+FROM golang:1.22 AS builder
 
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
+ENV CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
+# Create working directory
+WORKDIR /src
 
-WORKDIR ./src
-COPY . .
+# Copy Go module files first for better caching
+COPY src/go.mod src/go.sum ./
 
-RUN go get -d -v ./...
-RUN go install -v ./...
+# Download dependencies
+RUN go mod download
 
+# Copy the rest of the source code
+COPY src/ .
 
-#FROM scratch
-#FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5-243
+# Build the Go binary
+RUN go build -o /app/app-pod-info .
+
+# ---------------------------
+# 2. Final runtime stage
+# ---------------------------
 FROM registry.access.redhat.com/ubi9/ubi:9.3-1361.1699548029
-FROM ubuntu
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /go/bin/englishLearning  /go/bin/englishLearning
-COPY --from=builder /go/src/englishlearning/web  /go/bin/web
-#COPY --from=builder /go/src/englishlearning/configParams.yaml  /go/bin/
-COPY --from=builder /go/src/englishlearning/elaWordList.xlsx  /go/bin/
-WORKDIR /go/bin/
-CMD ["/go/bin/englishLearning"]
+
+# Install CA certificates (needed for HTTPS)
+RUN microdnf update -y && microdnf install -y ca-certificates && microdnf clean all
+
+# Copy binary from builder
+COPY --from=builder /app/app-pod-info /usr/local/bin/app-pod-info
+
+
+WORKDIR /usr/local/bin/
+
+CMD ["/usr/local/bin/app-pod-info"]
