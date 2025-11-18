@@ -6,7 +6,7 @@ ENV GO111MODULE=on \
     GOARCH=amd64
 
 
-WORKDIR /go/src/englishlearning
+WORKDIR ./src
 COPY . .
 
 RUN go get -d -v ./...
