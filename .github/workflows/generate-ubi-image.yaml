@@ -39,7 +39,7 @@ jobs:
 #           go test -v ./...
 
 # Second Job
-   deploy-Go-app:
+   build-app-and-docker-image:
          runs-on: ubuntu-latest
          #needs: [build-Go-app]
          steps:
