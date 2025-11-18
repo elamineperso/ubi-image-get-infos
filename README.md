@@ -1,0 +1,1 @@
+# ubi-image-get-infos
