@@ -60,7 +60,7 @@ jobs:
              context: .
              file: ./Dockerfile
              push: true
-             tags: ${{ secrets.DOCKER_HUB_USERNAME }}/english-learning:latest
+             tags: ${{ secrets.DOCKER_HUB_USERNAME }}/ubi-image-infos:latest
  
  
          - run: |
