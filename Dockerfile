@@ -33,7 +33,7 @@ FROM registry.access.redhat.com/ubi9/ubi
 RUN dnf update -y && dnf install -y ca-certificates && dnf clean all
 
 # Copy binary from builder
-COPY --from=builder /app/app-pod-info /usr/local/bin/app-pod-info
+COPY --from=builder /usr/src/app/app-pod-info /usr/local/bin/app-pod-info
 
 
 WORKDIR /usr/local/bin/
