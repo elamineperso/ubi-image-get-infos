@@ -1,0 +1,46 @@
+# Snippet from your Deployment or Pod manifest
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: az-checker-deployment
+  namespace: app-pod-infos-ns
+  labels:
+    app: az-checker-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: az-checker-app
+  template:
+    metadata:
+      labels:
+        app: az-checker-app
+    spec:
+      containers:
+      - name: az-checker-container
+        image: elamineperso/ubi-image-infos
+        ports:
+        - containerPort: 8080
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName  # Node Name
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name  # Pod Name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace # Pod Namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP   # Pod IP
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP  # Node IP
