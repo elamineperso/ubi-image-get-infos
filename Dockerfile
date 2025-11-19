@@ -1,14 +1,16 @@
 # ---------------------------
 # 1. Build stage
 # ---------------------------
-FROM golang:1.22 AS builder
+# https://hub.docker.com/_/golang/
+# https://docs.docker.com/guides/go-prometheus-monitoring/containerize/
+FROM golang:1.25 AS builder
 
 ENV CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-# Create working directory
-WORKDIR /src
+# Set (or Create if it does not exist) the working directory inside the golang:1.25 image
+WORKDIR /usr/src/app
 
 # Copy Go module files first for better caching
 COPY src/go.mod src/go.sum ./
@@ -20,7 +22,7 @@ RUN go mod download
 COPY src/ .
 
 # Build the Go binary
-RUN go build -o /app/app-pod-info .
+RUN go build -o /usr/src/app/app-pod-info .
 
 # ---------------------------
 # 2. Final runtime stage
