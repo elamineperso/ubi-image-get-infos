@@ -25,10 +25,10 @@ RUN go build -o /app/app-pod-info .
 # ---------------------------
 # 2. Final runtime stage
 # ---------------------------
-FROM registry.access.redhat.com/ubi9/ubi:9.3-1361.1699548029
+FROM registry.access.redhat.com/ubi9/ubi
 
 # Install CA certificates (needed for HTTPS)
-RUN microdnf update -y && microdnf install -y ca-certificates && microdnf clean all
+RUN dnf update -y && dnf install -y ca-certificates && dnf clean all
 
 # Copy binary from builder
 COPY --from=builder /app/app-pod-info /usr/local/bin/app-pod-info
