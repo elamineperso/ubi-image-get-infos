@@ -100,7 +100,7 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 			padding: 30px 40px;
 			border-radius: 8px;
 			box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-			text-align: center;
+			text-align: left;
 		}
 		h1, h2 {
 			margin-bottom: 10px;
