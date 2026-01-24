@@ -59,6 +59,7 @@ func main() {
 }
 
 func infoHandler(w http.ResponseWriter, r *http.Request) {
+	// Capture server time as late as possible
 	serverTimeUTC := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 
 	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
@@ -93,7 +94,7 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 			padding: 0;
 		}
 		.container {
-			max-width: 700px;
+			max-width: 720px;
 			margin: 60px auto;
 			background: #ffffff;
 			padding: 30px 40px;
@@ -111,6 +112,11 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 		li {
 			margin: 6px 0;
 		}
+		.delta {
+			font-size: 1.2em;
+			font-weight: bold;
+			color: #d9534f;
+		}
 	</style>
 </head>
 <body>
@@ -119,8 +125,9 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 
 		<h2>Timing</h2>
 		<ul>
-			<li><strong>Server Time (UTC):</strong><br>%s</li>
+			<li><strong>Server Time (UTC):</strong><br><span id="serverTime">%s</span></li>
 			<li><strong>Client Desktop Time:</strong><br><span id="clientTime">loading...</span></li>
+			<li><strong>Latency Delta:</strong><br><span class="delta" id="latencyDelta">calculating...</span></li>
 		</ul>
 
 		<h2>Pod</h2>
@@ -140,7 +147,19 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 	</div>
 
 	<script>
-		document.getElementById("clientTime").innerText = new Date().toISOString();
+		// Capture client-side time
+		const clientTime = new Date();
+		document.getElementById("clientTime").innerText = clientTime.toISOString();
+
+		// Parse server time
+		const serverTimeStr = document.getElementById("serverTime").innerText;
+		const serverTime = new Date(serverTimeStr);
+
+		// Calculate delta in milliseconds
+		const deltaMs = clientTime - serverTime;
+
+		document.getElementById("latencyDelta").innerText =
+			deltaMs + " ms";
 	</script>
 </body>
 </html>
@@ -157,5 +176,8 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, html)
 
-	log.Printf("Served request | Region=%s Zone=%s ServerTime=%s", region, zone, serverTimeUTC)
+	log.Printf(
+		"Served request | Region=%s Zone=%s ServerTime=%s",
+		region, zone, serverTimeUTC,
+	)
 }
