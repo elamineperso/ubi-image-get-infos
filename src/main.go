@@ -127,7 +127,7 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 		<ul>
 			<li><strong>Server Time (UTC):</strong><br><span id="serverTime">%s</span></li>
 			<li><strong>Client Desktop Time:</strong><br><span id="clientTime">loading...</span></li>
-			<li><strong>Latency Delta:</strong><br><span class="delta" id="latencyDelta">calculating...</span></li>
+			
 		</ul>
 
 		<h2>Pod</h2>
@@ -155,11 +155,7 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 		const serverTimeStr = document.getElementById("serverTime").innerText;
 		const serverTime = new Date(serverTimeStr);
 
-		// Calculate delta in milliseconds
-		const deltaMs = clientTime - serverTime;
-
-		document.getElementById("latencyDelta").innerText =
-			deltaMs + " ms";
+		
 	</script>
 </body>
 </html>
