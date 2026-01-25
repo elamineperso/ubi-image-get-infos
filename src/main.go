@@ -128,9 +128,24 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 </head>
 <body>
 	<div class="container">
-		<h1>OpenShift Pod & Node Information</h1>
+		<h1>Pod & Node Information</h1>
 
-		<h2>Timing</h2>
+		
+		<h2>Pod</h2>
+		<ul>
+			<li><strong>Name:</strong> %s</li>
+			<li><strong>Namespace:</strong> %s</li>
+			<li><strong>IP:</strong> %s</li>
+		</ul>
+
+		<h2>Node</h2>
+		<ul>
+			<li><strong>Name:</strong> %s</li>
+			<li><strong>IP:</strong> %s</li>
+			<li><strong>Region:</strong> <span style="color: green;">%s</span></li>
+			<li><strong>Zone:</strong> <span style="color: blue;">%s</span></li>
+		</ul>
+<h2>Timing</h2>
 		<ul>
 			<li>
 				<strong>Server Time (UTC):</strong><br>
@@ -156,20 +171,8 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 			</ul>
 		</div>
 
-		<h2>Pod</h2>
-		<ul>
-			<li><strong>Name:</strong> %s</li>
-			<li><strong>Namespace:</strong> %s</li>
-			<li><strong>IP:</strong> %s</li>
-		</ul>
 
-		<h2>Node</h2>
-		<ul>
-			<li><strong>Name:</strong> %s</li>
-			<li><strong>IP:</strong> %s</li>
-			<li><strong>Region:</strong> <span style="color: green;">%s</span></li>
-			<li><strong>Zone:</strong> <span style="color: blue;">%s</span></li>
-		</ul>
+		
 	</div>
 
 	<script>
