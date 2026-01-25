@@ -59,7 +59,6 @@ func main() {
 }
 
 func infoHandler(w http.ResponseWriter, r *http.Request) {
-	// Capture server time (UTC, RFC3339 with ms)
 	serverTime := time.Now().UTC()
 	serverTimeStr := serverTime.Format("2006-01-02T15:04:05.000Z")
 
@@ -118,6 +117,13 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 			font-weight: bold;
 			color: #d9534f;
 		}
+		.note {
+			margin-top: 15px;
+			padding: 12px;
+			background: #fff3cd;
+			border-left: 4px solid #f0ad4e;
+			font-size: 0.95em;
+		}
 	</style>
 </head>
 <body>
@@ -135,10 +141,20 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 				<span id="clientTime">loading...</span>
 			</li>
 			<li>
-				<strong>Latency Delta:</strong><br>
+				<strong>Latency Delta*</strong><br>
 				<span class="delta" id="latencyDelta">calculating...</span>
 			</li>
 		</ul>
+
+		<div class="note">
+			⚠️ <strong>This delta is NOT network RTT.</strong>
+			<ul>
+				<li>Network latency</li>
+				<li>Browser rendering delay</li>
+				<li>JavaScript execution delay</li>
+				<li>Clock skew between machines</li>
+			</ul>
+		</div>
 
 		<h2>Pod</h2>
 		<ul>
@@ -157,19 +173,15 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 	</div>
 
 	<script>
-		// Capture client-side time as late as possible
 		const clientTime = new Date();
 		document.getElementById("clientTime").innerText =
 			clientTime.toISOString();
 
-		// Read server time from data attribute (robust)
 		const serverTimeStr =
 			document.getElementById("serverTime").dataset.utc;
 		const serverTime = new Date(serverTimeStr);
 
-		// Calculate perceived latency (ms)
 		const deltaMs = clientTime - serverTime;
-
 		document.getElementById("latencyDelta").innerText =
 			deltaMs + " ms";
 	</script>
