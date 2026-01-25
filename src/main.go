@@ -59,8 +59,9 @@ func main() {
 }
 
 func infoHandler(w http.ResponseWriter, r *http.Request) {
-	// Capture server time as late as possible
-	serverTimeUTC := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
+	// Capture server time (UTC, RFC3339 with ms)
+	serverTime := time.Now().UTC()
+	serverTimeStr := serverTime.Format("2006-01-02T15:04:05.000Z")
 
 	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
 	if err != nil {
@@ -125,9 +126,18 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 
 		<h2>Timing</h2>
 		<ul>
-			<li><strong>Server Time (UTC):</strong><br><span id="serverTime">%s</span></li>
-			<li><strong>Client Desktop Time:</strong><br><span id="clientTime">loading...</span></li>
-			
+			<li>
+				<strong>Server Time (UTC):</strong><br>
+				<span id="serverTime" data-utc="%s">%s</span>
+			</li>
+			<li>
+				<strong>Client Desktop Time:</strong><br>
+				<span id="clientTime">loading...</span>
+			</li>
+			<li>
+				<strong>Latency Delta:</strong><br>
+				<span class="delta" id="latencyDelta">calculating...</span>
+			</li>
 		</ul>
 
 		<h2>Pod</h2>
@@ -147,20 +157,27 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 	</div>
 
 	<script>
-		// Capture client-side time
+		// Capture client-side time as late as possible
 		const clientTime = new Date();
-		document.getElementById("clientTime").innerText = clientTime.toISOString();
+		document.getElementById("clientTime").innerText =
+			clientTime.toISOString();
 
-		// Parse server time
-		const serverTimeStr = document.getElementById("serverTime").innerText;
+		// Read server time from data attribute (robust)
+		const serverTimeStr =
+			document.getElementById("serverTime").dataset.utc;
 		const serverTime = new Date(serverTimeStr);
 
-		
+		// Calculate perceived latency (ms)
+		const deltaMs = clientTime - serverTime;
+
+		document.getElementById("latencyDelta").innerText =
+			deltaMs + " ms";
 	</script>
 </body>
 </html>
 `,
-		serverTimeUTC,
+		serverTimeStr,
+		serverTimeStr,
 		podName,
 		podNamespace,
 		podIP,
@@ -174,6 +191,6 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf(
 		"Served request | Region=%s Zone=%s ServerTime=%s",
-		region, zone, serverTimeUTC,
+		region, zone, serverTimeStr,
 	)
 }
