@@ -117,20 +117,30 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 			font-weight: bold;
 			color: #d9534f;
 		}
-		.note {
-			margin-top: 15px;
-			padding: 12px;
-			background: #fff3cd;
-			border-left: 4px solid #f0ad4e;
-			font-size: 0.95em;
-		}
+.note {
+	margin-top: 8px;
+	padding: 6px 8px;
+	font-size: 0.75em;
+	line-height: 1.2;
+	background: #f8f9fa;
+	border-left: 3px solid #f0ad4e;
+	color: #555;
+}
+
+.note ul {
+	margin: 4px 0 0 14px;
+	padding: 0;
+}
+
+.note li {
+	margin: 2px 0;
+}
+
 	</style>
 </head>
 <body>
 	<div class="container">
 		<h1>Pod & Node Information</h1>
-
-		
 		<h2>Pod</h2>
 		<ul>
 			<li><strong>Name:</strong> %s</li>
@@ -191,8 +201,7 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 </body>
 </html>
 `,
-		serverTimeStr,
-		serverTimeStr,
+
 		podName,
 		podNamespace,
 		podIP,
@@ -200,6 +209,8 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 		nodeIP,
 		region,
 		zone,
+		serverTimeStr,
+		serverTimeStr,
 	)
 
 	fmt.Fprint(w, html)
