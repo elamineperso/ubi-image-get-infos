@@ -6,7 +6,6 @@ export const options = {
   duration: '1m',
 };
 
-// Custom counter tagged by AZ
 const azResponses = new Counter('az_responses');
 
 export default function () {
@@ -14,13 +13,24 @@ export default function () {
 
   check(res, {
     'status is 200': (r) => r.status === 200,
+    'body not empty': (r) => r.body && r.body.length > 0,
+    'is json': (r) =>
+      r.headers['Content-Type'] &&
+      r.headers['Content-Type'].includes('application/json'),
   });
 
-  // Parse JSON response
-  const body = res.json();
+  // Only parse if safe
+  if (
+    res.status === 200 &&
+    res.body &&
+    res.body.length > 0 &&
+    res.headers['Content-Type'] &&
+    res.headers['Content-Type'].includes('application/json')
+  ) {
+    const body = JSON.parse(res.body);
 
-  if (body && body.az) {
-    // Increment counter with AZ tag
-    azResponses.add(1, { az: body.az });
+    if (body.az) {
+      azResponses.add(1, { az: body.az });
+    }
   }
 }
