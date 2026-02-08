@@ -18,6 +18,15 @@ spec:
       labels:
         app: az-checker-app
     spec:
+
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: az-checker-app
+            topologyKey: topology.kubernetes.io/zone
+
       containers:
       - name: az-checker-container
         image: elamineperso/ubi-image-infos
