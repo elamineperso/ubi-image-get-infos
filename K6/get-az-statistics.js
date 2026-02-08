@@ -10,7 +10,7 @@ export const options = {
 const azResponses = new Counter('az_responses');
 
 export default function () {
-  const res = http.get('https://my-api.example.com/api/az');
+  const res = http.get('http://51.68.127.91:31570/api/az');
 
   check(res, {
     'status is 200': (r) => r.status === 200,
