@@ -1,6 +1,6 @@
 # add labels to a node
 ```shell
-oc label node worker-a-0 topology.kubernetes.io/zone=az-a --overwrite
+kubectl label node worker-a-0 topology.kubernetes.io/zone=az-a --overwrite
 ```
 
 
