@@ -1,3 +1,9 @@
+# add labels to a node
+```shell
+oc label node worker-a-0 topology.kubernetes.io/zone=az-a --overwrite
+```
+
+
 # ubi-image-get-infos
 
 Initialize a module
