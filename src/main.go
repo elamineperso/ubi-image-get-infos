@@ -54,13 +54,14 @@ func main() {
 	}
 
 	http.HandleFunc("/", infoHandler)
+	http.HandleFunc("/api/az", azHandler)
+
 	log.Printf("🌍 Web server listening on port %s", ListenPort)
 	log.Fatal(http.ListenAndServe(":"+ListenPort, nil))
 }
 
 func infoHandler(w http.ResponseWriter, r *http.Request) {
-	serverTime := time.Now().UTC()
-	serverTimeStr := serverTime.Format("2006-01-02T15:04:05.000Z")
+	serverTime := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 
 	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
 	if err != nil {
@@ -100,7 +101,6 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 			padding: 30px 40px;
 			border-radius: 8px;
 			box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-			text-align: left;
 		}
 		h1, h2 {
 			margin-bottom: 10px;
@@ -112,35 +112,12 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 		li {
 			margin: 6px 0;
 		}
-		.delta {
-			font-size: 1.2em;
-			font-weight: bold;
-			color: #d9534f;
-		}
-.note {
-	margin-top: 8px;
-	padding: 6px 8px;
-	font-size: 0.75em;
-	line-height: 1.2;
-	background: #f8f9fa;
-	border-left: 3px solid #f0ad4e;
-	color: #555;
-}
-
-.note ul {
-	margin: 4px 0 0 14px;
-	padding: 0;
-}
-
-.note li {
-	margin: 2px 0;
-}
-
 	</style>
 </head>
 <body>
 	<div class="container">
 		<h1>Pod & Node Information</h1>
+
 		<h2>Pod</h2>
 		<ul>
 			<li><strong>Name:</strong> %s</li>
@@ -155,53 +132,21 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 			<li><strong>Region:</strong> <span style="color: green;">%s</span></li>
 			<li><strong>Zone:</strong> <span style="color: blue;">%s</span></li>
 		</ul>
-<h2>Timing</h2>
+
+		<h2>Time</h2>
 		<ul>
-			<li>
-				<strong>Server Time (UTC):</strong><br>
-				<span id="serverTime" data-utc="%s">%s</span>
-			</li>
-			<li>
-				<strong>Client Desktop Time:</strong><br>
-				<span id="clientTime">loading...</span>
-			</li>
-			<li>
-				<strong>Latency Delta*</strong><br>
-				<span class="delta" id="latencyDelta">calculating...</span>
-			</li>
+			<li><strong>Server Time (UTC):</strong> <span id="serverTime">%s</span></li>
+			<li><strong>Client Time:</strong> <span id="clientTime">loading...</span></li>
 		</ul>
-
-		<div class="note">
-			⚠️ <strong>This delta is NOT network RTT.</strong>
-			<ul>
-				<li>Network latency</li>
-				<li>Browser rendering delay</li>
-				<li>JavaScript execution delay</li>
-				<li>Clock skew between machines</li>
-			</ul>
-		</div>
-
-
-		
 	</div>
 
 	<script>
-		const clientTime = new Date();
 		document.getElementById("clientTime").innerText =
-			clientTime.toISOString();
-
-		const serverTimeStr =
-			document.getElementById("serverTime").dataset.utc;
-		const serverTime = new Date(serverTimeStr);
-
-		const deltaMs = clientTime - serverTime;
-		document.getElementById("latencyDelta").innerText =
-			deltaMs + " ms";
+			new Date().toISOString();
 	</script>
 </body>
 </html>
 `,
-
 		podName,
 		podNamespace,
 		podIP,
@@ -209,14 +154,31 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 		nodeIP,
 		region,
 		zone,
-		serverTimeStr,
-		serverTimeStr,
+		serverTime,
 	)
 
 	fmt.Fprint(w, html)
 
-	log.Printf(
-		"Served request | Region=%s Zone=%s ServerTime=%s",
-		region, zone, serverTimeStr,
-	)
+	log.Printf("Served / | Region=%s Zone=%s ServerTime=%s", region, zone, serverTime)
+}
+
+func azHandler(w http.ResponseWriter, r *http.Request) {
+	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{ "error": "failed to retrieve node" }`)
+		return
+	}
+
+	zone := node.Labels[ZoneLabelKey]
+	if zone == "" {
+		zone = "UNKNOWN"
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, `{ "az": "%s" }`, zone)
+
+	log.Printf("Served /api/az | Zone=%s", zone)
 }
