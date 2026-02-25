@@ -35,6 +35,7 @@ var (
 
 	refreshInterval time.Duration
 	apiTimeout      time.Duration
+	accessLog       bool
 
 	nodeMeta = &nodeMetadata{
 		Zone:      "ZONE UNKNOWN",
@@ -83,6 +84,7 @@ func main() {
 	nodeIP = os.Getenv("NODE_IP")
 	refreshInterval = getEnvDuration("AZ_REFRESH_INTERVAL", 60*time.Second)
 	apiTimeout = getEnvDuration("KUBE_API_TIMEOUT", 2*time.Second)
+	accessLog = getEnvBool("ACCESS_LOG", false)
 
 	if nodeName == "" {
 		log.Fatal("ERROR: NODE_NAME environment variable not set")
@@ -210,7 +212,9 @@ func infoHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, html)
 
-	log.Printf("Served / | Region=%s Zone=%s ServerTime=%s", meta.Region, meta.Zone, serverTime)
+	if accessLog {
+		log.Printf("Served / | Region=%s Zone=%s ServerTime=%s", meta.Region, meta.Zone, serverTime)
+	}
 }
 
 func azHandler(w http.ResponseWriter, r *http.Request) {
@@ -231,7 +235,9 @@ func azHandler(w http.ResponseWriter, r *http.Request) {
 		"api_timeout": apiTimeout.String(),
 	})
 
-	log.Printf("Served /api/az | Zone=%s Region=%s", meta.Zone, meta.Region)
+	if accessLog {
+		log.Printf("Served /api/az | Zone=%s Region=%s", meta.Zone, meta.Region)
+	}
 }
 
 func healthzHandler(w http.ResponseWriter, r *http.Request) {
@@ -349,4 +355,19 @@ func getEnvDuration(key string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return d
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	switch v {
+	case "1", "true", "TRUE", "yes", "YES", "on", "ON":
+		return true
+	case "0", "false", "FALSE", "no", "NO", "off", "OFF":
+		return false
+	default:
+		return fallback
+	}
 }
