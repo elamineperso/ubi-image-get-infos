@@ -63,22 +63,22 @@ func main() {
 func infoHandler(w http.ResponseWriter, r *http.Request) {
 	serverTime := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 
-	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error retrieving node %s: %v", nodeName, err)
-		return
-	}
+	//node, err := clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+	//if err != nil {
+	//	w.WriteHeader(http.StatusInternalServerError)
+	//	fmt.Fprintf(w, "Error retrieving node %s: %v", nodeName, err)
+	//	return
+	//}
 
-	zone := node.Labels[ZoneLabelKey]
-	if zone == "" {
-		zone = "ZONE UNKNOWN"
-	}
+	//zone := node.Labels[ZoneLabelKey]
+	//if zone == "" {
+	//	zone = "ZONE UNKNOWN"
+	//}
 
-	region := node.Labels[RegionLabelKey]
-	if region == "" {
-		region = "REGION UNKNOWN"
-	}
+	//region := node.Labels[RegionLabelKey]
+	//if region == "" {
+	//	region = "REGION UNKNOWN"
+	//}
 
 	w.WriteHeader(http.StatusOK)
 
