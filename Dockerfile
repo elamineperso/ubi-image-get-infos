@@ -1,41 +1,46 @@
 # ---------------------------
-# 1. Build stage
+# 1️⃣ Build stage
 # ---------------------------
-# https://hub.docker.com/_/golang/
-# https://docs.docker.com/guides/go-prometheus-monitoring/containerize/
-FROM golang:1.25 AS builder
+FROM golang:1.22 AS builder
 
 ENV CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-# Set (or Create if it does not exist) the working directory inside the golang:1.25 image
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy Go module files first for better caching
-COPY src/go.mod src/go.sum ./
-
-# Download dependencies
+# Copy go.mod first (better caching)
+COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the rest of the source code
-COPY src/ .
+# Copy source code
+COPY . .
 
-# Build the Go binary
-RUN go build -o /usr/src/app/app-pod-info .
+# Build static binary
+RUN go build -ldflags="-s -w" -o app-pod-info .
 
 # ---------------------------
-# 2. Final runtime stage
+# 2️⃣ Runtime stage
 # ---------------------------
-FROM registry.access.redhat.com/ubi9/ubi
+FROM registry.access.redhat.com/ubi9/ubi-minimal
 
-# Install CA certificates (needed for HTTPS)
-RUN dnf update -y && dnf install -y ca-certificates && dnf clean all
+# Install only CA certs (required for Kubernetes API TLS)
+RUN microdnf install -y ca-certificates \
+    && microdnf clean all
 
-# Copy binary from builder
-COPY --from=builder /usr/src/app/app-pod-info /usr/local/bin/app-pod-info
+# Create non-root user (important for OpenShift)
+RUN useradd -u 1001 appuser
 
+WORKDIR /app
 
-WORKDIR /usr/local/bin/
+# Copy binary
+COPY --from=builder /app/app-pod-info .
 
-CMD ["/usr/local/bin/app-pod-info"]
+# OpenShift runs with random UID, so make binary executable for any user
+RUN chmod g=u /app/app-pod-info
+
+USER 1001
+
+EXPOSE 8080
+
+CMD ["./app-pod-info"]
