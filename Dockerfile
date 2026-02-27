@@ -7,14 +7,21 @@ ENV CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-WORKDIR /src
+# Work inside /app (cleaner than /src)
+WORKDIR /app
 
+# Copy only go.mod and go.sum first (better layer caching)
 COPY src/go.mod src/go.sum ./
+
+# Download dependencies
 RUN go mod download
 
+# Copy the rest of the source code
 COPY src/ .
 
-RUN go build -ldflags="-s -w" -o app-pod-info .
+# Build binary
+RUN go build -ldflags="-s -w" -o app-pod-info main.go
+
 
 
 # ---------------------------
@@ -22,19 +29,18 @@ RUN go build -ldflags="-s -w" -o app-pod-info .
 # ---------------------------
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.3
 
+# Install CA certificates (needed for Kubernetes API HTTPS)
 RUN microdnf install -y ca-certificates \
     && microdnf clean all
 
 WORKDIR /app
 
-COPY --from=builder /src/app-pod-info /app/app-pod-info
+# Copy binary from builder
+COPY --from=builder /app/app-pod-info .
 
 # 🔥 OpenShift-compatible permissions
 RUN chgrp -R 0 /app && chmod -R g=u /app
 
 EXPOSE 8080
-
-# ❗ Do NOT set USER
-# OpenShift will inject random UID automatically
 
 ENTRYPOINT ["/app/app-pod-info"]
