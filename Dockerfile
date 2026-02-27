@@ -1,5 +1,5 @@
 # ---------------------------
-# 1️⃣ Build stage
+# 1. Build stage
 # ---------------------------
 FROM golang:1.22 AS builder
 
@@ -7,40 +7,33 @@ ENV CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-WORKDIR /app
+# Create working directory
+WORKDIR /src
 
-# Copy go.mod first (better caching)
-COPY go.mod go.sum ./
+# Copy Go module files first for better caching
+COPY src/go.mod src/go.sum ./
+
+# Download dependencies
 RUN go mod download
 
-# Copy source code
-COPY . .
+# Copy the rest of the source code
+COPY src/ .
 
-# Build static binary
-RUN go build -ldflags="-s -w" -o app-pod-info .
+# Build the Go binary
+RUN go build -o /app/app-pod-info .
 
 # ---------------------------
-# 2️⃣ Runtime stage
+# 2. Final runtime stage
 # ---------------------------
-FROM registry.access.redhat.com/ubi9/ubi-minimal
+FROM registry.access.redhat.com/ubi9/ubi:9.3-1361.1699548029
 
-# Install only CA certs (required for Kubernetes API TLS)
-RUN microdnf install -y ca-certificates \
-    && microdnf clean all
+# Install CA certificates (needed for HTTPS)
+RUN microdnf update -y && microdnf install -y ca-certificates && microdnf clean all
 
-# Create non-root user (important for OpenShift)
-RUN useradd -u 1001 appuser
+# Copy binary from builder
+COPY --from=builder /app/app-pod-info /usr/local/bin/app-pod-info
 
-WORKDIR /app
 
-# Copy binary
-COPY --from=builder /app/app-pod-info .
+WORKDIR /usr/local/bin/
 
-# OpenShift runs with random UID, so make binary executable for any user
-RUN chmod g=u /app/app-pod-info
-
-USER 1001
-
-EXPOSE 8080
-
-CMD ["./app-pod-info"]
+CMD ["/usr/local/bin/app-pod-info"]
