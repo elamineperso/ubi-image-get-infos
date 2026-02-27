@@ -4,19 +4,17 @@
 FROM golang:1.22 AS builder
 
 ENV CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
+    GOOS=linux
 
-# Work inside /app (cleaner than /src)
 WORKDIR /app
 
-# Copy only go.mod and go.sum first (better layer caching)
+# Copy go module files first (better caching)
 COPY src/go.mod src/go.sum ./
 
-# Download dependencies
-RUN go mod download
+# 🔥 Ensure modules are complete and verified
+RUN go mod tidy && go mod download
 
-# Copy the rest of the source code
+# Copy source code
 COPY src/ .
 
 # Build binary
@@ -29,13 +27,12 @@ RUN go build -ldflags="-s -w" -o app-pod-info main.go
 # ---------------------------
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.3
 
-# Install CA certificates (needed for Kubernetes API HTTPS)
 RUN microdnf install -y ca-certificates \
     && microdnf clean all
 
 WORKDIR /app
 
-# Copy binary from builder
+# Copy binary
 COPY --from=builder /app/app-pod-info .
 
 # 🔥 OpenShift-compatible permissions
