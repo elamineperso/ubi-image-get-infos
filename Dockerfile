@@ -1,5 +1,5 @@
 # ---------------------------
-# 1. Build stage
+# 1️⃣ Build stage
 # ---------------------------
 FROM golang:1.22 AS builder
 
@@ -7,33 +7,42 @@ ENV CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
-# Create working directory
 WORKDIR /src
 
-# Copy Go module files first for better caching
+# Copy go module files first (better layer caching)
 COPY src/go.mod src/go.sum ./
-
-# Download dependencies
 RUN go mod download
 
-# Copy the rest of the source code
+# Copy source code
 COPY src/ .
 
-# Build the Go binary
-RUN go build -o /app/app-pod-info .
+# Build statically linked binary
+RUN go build -ldflags="-s -w" -o app-pod-info .
+
+
 
 # ---------------------------
-# 2. Final runtime stage
+# 2️⃣ Runtime stage
 # ---------------------------
-FROM registry.access.redhat.com/ubi9/ubi:9.3-1361.1699548029
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.3
 
-# Install CA certificates (needed for HTTPS)
-RUN microdnf update -y && microdnf install -y ca-certificates && microdnf clean all
+# Install CA certificates (needed for Kubernetes API HTTPS)
+RUN microdnf install -y ca-certificates \
+    && microdnf clean all
 
-# Copy binary from builder
-COPY --from=builder /app/app-pod-info /usr/local/bin/app-pod-info
+# Create non-root user (OpenShift compatible)
+RUN useradd -u 1001 -r -g 0 -s /sbin/nologin appuser
 
+WORKDIR /app
 
-WORKDIR /usr/local/bin/
+# Copy binary
+COPY --from=builder /src/app-pod-info /app/app-pod-info
 
-CMD ["/usr/local/bin/app-pod-info"]
+# Ensure OpenShift random UID compatibility
+RUN chgrp -R 0 /app && chmod -R g=u /app
+
+EXPOSE 8080
+
+USER 1001
+
+ENTRYPOINT ["/app/app-pod-info"]
