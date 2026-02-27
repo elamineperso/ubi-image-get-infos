@@ -1,4 +1,4 @@
-module pod-node-info
+module github.com/elamineperso/pod-node-info
 
 go 1.22
 
