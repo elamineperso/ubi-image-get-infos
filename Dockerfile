@@ -8,14 +8,14 @@ ENV CGO_ENABLED=0 \
 
 WORKDIR /app
 
-# Copy go module files first (better caching)
+# Copy go module files
 COPY src/go.mod src/go.sum ./
 
-# 🔥 Ensure modules are complete and verified
-RUN go mod tidy && go mod download
-
-# Copy source code
+# Copy source code BEFORE tidy
 COPY src/ .
+
+# Now tidy works because packages exist
+RUN go mod tidy && go mod download
 
 # Build binary
 RUN go build -ldflags="-s -w" -o app-pod-info main.go
@@ -32,10 +32,9 @@ RUN microdnf install -y ca-certificates \
 
 WORKDIR /app
 
-# Copy binary
 COPY --from=builder /app/app-pod-info .
 
-# 🔥 OpenShift-compatible permissions
+# OpenShift-compatible permissions
 RUN chgrp -R 0 /app && chmod -R g=u /app
 
 EXPOSE 8080
